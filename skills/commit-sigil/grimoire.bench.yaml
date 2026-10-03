@@ -1,0 +1,52 @@
+suite: commit-sigil-basic
+defaults:
+  repeat: 3
+  timeoutMs: 180000
+tasks:
+  - id: feature
+    prompt: "Write the commit message for the change in change.diff to COMMIT_MSG.txt. This is for ticket #318."
+    fixtures: ./fixtures/feature
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^feat\(export\): [a-z][^\n]*[^.\n]\n\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]{1,50}\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^(?![\s\S]*[^\n]{73,})[\s\S]+$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]+(?:\n[^\n]+)*(?:\n\n[^\n]+(?:\n[^\n]+)*)?\n\nRefs: #318\nImpact: medium\n$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '[^\n]\n$' }
+    judge:
+      rubric: "A 5 is a commit message whose body explains WHY the change was made (the motivation, e.g. why a configurable delimiter is needed) instead of restating the diff line by line. It is faithful to the diff: it only describes behaviour the diff actually implements (a delimiter option on toCsv defaulting to a comma, with quoting based on that delimiter) and invents nothing. Type and scope are sensible for the change. Score drops for a body that merely paraphrases the code, for invented behaviour or claims, or for a misleading type or scope."
+      passScore: 3
+      files: [change.diff, COMMIT_MSG.txt]
+
+  - id: docs-only
+    prompt: "Write the commit message for the change in change.diff to COMMIT_MSG.txt."
+    fixtures: ./fixtures/docs-only
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^docs\(docs\): [a-z][^\n]*[^.\n]\n\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]{1,50}\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^(?![\s\S]*[^\n]{73,})[\s\S]+$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]+(?:\n[^\n]+)*(?:\n\n[^\n]+(?:\n[^\n]+)*)?\n\nRefs: none\nImpact: low\n$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '[^\n]\n$' }
+    judge:
+      rubric: "A 5 is a commit message whose body explains WHY the README was edited (e.g. users hit confusing startup errors on old Node versions and did not know the output file is overwritten) rather than restating the diff. It is faithful to the diff: it only mentions documentation changes actually made (Node 18 requirement, output location and overwrite behaviour) and invents no code changes. Type and scope are sensible for a docs-only change. Score drops for restating the diff, invented behaviour, or claiming code changed."
+      passScore: 3
+      files: [change.diff, COMMIT_MSG.txt]
+
+  - id: api-break
+    prompt: "Write the commit message for the change in change.diff to COMMIT_MSG.txt. This is for ticket #318."
+    fixtures: ./fixtures/api-break
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^(?:refactor|feat)\(api\): [a-z][^\n]*[^.\n]\n\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]{1,50}\n' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^(?![\s\S]*[^\n]{73,})[\s\S]+$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '^[^\n]+\n\n(?!Refs:)[^\n]+(?:\n[^\n]+)*(?:\n\n[^\n]+(?:\n[^\n]+)*)?\n\nRefs: #318\nImpact: high\n$' }
+      - { type: file_contains, path: COMMIT_MSG.txt, regex: '[^\n]\n$' }
+    judge:
+      rubric: "A 5 is a commit message whose body explains WHY getUser and getUserByEmail were replaced by a single findUser (e.g. one flexible lookup instead of one function per field) rather than restating the diff, and that makes clear callers of the removed functions must migrate. It is faithful to the diff and invents no behaviour. Type and scope are sensible. Score drops for restating the diff, invented behaviour, or hiding that the exported functions were removed."
+      passScore: 3
+      files: [change.diff, COMMIT_MSG.txt]

@@ -1,0 +1,23 @@
+diff --git a/docs/README.md b/docs/README.md
+index 51ac3e2..e08b7f9 100644
+--- a/docs/README.md
++++ b/docs/README.md
+@@ -3,12 +3,15 @@
+ Small tool that converts reports to other formats.
+ 
+ ## Install
+ 
+-Run `npm install reportly` and you are done.
++Run `npm install reportly`. Node 18 or newer is required; older
++versions fail at startup with a syntax error that points at
++our source files rather than at the Node version.
+ 
+ ## Usage
+ 
+-Call `reportly input.json`.
++Call `reportly input.json`. The converted file is written next to
++the input, and an existing output file is overwritten.
+ 
+ ## License
+ 
+ MIT

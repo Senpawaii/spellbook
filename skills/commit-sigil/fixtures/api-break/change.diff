@@ -1,0 +1,22 @@
+diff --git a/src/api/users.js b/src/api/users.js
+index 7a90c1d..2f4e6b8 100644
+--- a/src/api/users.js
++++ b/src/api/users.js
+@@ -4,14 +4,10 @@
+ const db = require('../db');
+ 
+-function getUser(id) {
+-  return db.users.find((user) => user.id === id);
+-}
+-
+-function getUserByEmail(email) {
+-  return db.users.find((user) => user.email === email);
+-}
++function findUser(query) {
++  return db.users.find((user) =>
++    Object.entries(query).every(([key, value]) => user[key] === value)
++  );
++}
+ 
+-module.exports = { getUser, getUserByEmail };
++module.exports = { findUser };

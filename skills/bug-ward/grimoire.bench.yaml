@@ -1,0 +1,40 @@
+suite: bug-ward-basic
+defaults:
+  repeat: 3
+  timeoutMs: 180000
+tasks:
+  - id: slugify
+    prompt: "Bug report: slugify('  Hello, World!  ') returns '-hello-world-' but it should return 'hello-world'. Please fix it."
+    fixtures: ./fixtures/slugify
+    assertions:
+      - { type: skill_loaded }
+      - { type: command, run: "node --test", exitCode: 0 }
+      # regression test added to the existing test file, with the exact prefix and the reported input
+      - { type: file_contains, path: test/slugify.test.js, regex: 'test\([''"]regression: ' }
+      - { type: file_contains, path: test/slugify.test.js, regex: 'test\([''"]regression: [\s\S]*Hello, World!' }
+      # existing tests are not removed
+      - { type: file_contains, path: test/slugify.test.js, regex: 'test\([''"]handles empty string[''"]' }
+      # reported input / output must not be hardcoded in source
+      - { type: file_contains, path: src/slugify.js, regex: '^(?![\s\S]*(?:Hello, World|hello-world))[\s\S]+$' }
+      - { type: transcript_contains, tool: Bash, pattern: 'node --test|npm (run )?test' }
+    judge:
+      rubric: "A 5 means all of: (1) a test named with the prefix 'regression:' was added to test/slugify.test.js, uses exactly the reported input '  Hello, World!  ' and expects 'hello-world', and would fail on the original unfixed slugify (which returns '-hello-world-'); (2) the fix in src/slugify.js is minimal and general (e.g. trimming leading/trailing hyphens), with no special-casing of the reported input and no unrelated refactoring; no existing test was edited or deleted; (3) the agent's final message ends with exactly three lines starting 'Bug: ', 'Test: ' and 'Fix: ' (one sentence each, Test is the full regression test name), with nothing after them. Drop the score for each violated point; score 1-2 if the fix is special-cased or the final lines are missing."
+      passScore: 4
+      files: ["src/slugify.js", "test/slugify.test.js"]
+
+  - id: pagination
+    prompt: "Bug report: lastPage(20, 10) returns 3 but it should return 2 (20 items at 10 per page is exactly 2 pages). Please fix it."
+    fixtures: ./fixtures/pagination
+    assertions:
+      - { type: skill_loaded }
+      - { type: command, run: "node --test", exitCode: 0 }
+      - { type: file_contains, path: test/pagination.test.js, regex: 'test\([''"]regression: ' }
+      - { type: file_contains, path: test/pagination.test.js, regex: 'test\([''"]regression: [\s\S]*lastPage\(20, ?10\)' }
+      - { type: file_contains, path: test/pagination.test.js, regex: 'test\([''"]returns 1 for zero items[''"]' }
+      # the reported input must not be special-cased in source
+      - { type: file_contains, path: src/pagination.js, regex: '^(?![\s\S]*\b20\b)[\s\S]+$' }
+      - { type: transcript_contains, tool: Bash, pattern: 'node --test|npm (run )?test' }
+    judge:
+      rubric: "A 5 means all of: (1) a test named with the prefix 'regression:' was added to test/pagination.test.js, calls lastPage(20, 10) and expects 2, and would fail on the original unfixed lastPage (which returns 3); (2) the fix in src/pagination.js is minimal and general (e.g. Math.ceil with zero items still returning 1), with no special-casing of 20 or of exact multiples by literal values and no unrelated refactoring; no existing test was edited or deleted; (3) the agent's final message ends with exactly three lines starting 'Bug: ', 'Test: ' and 'Fix: ' (one sentence each, Test is the full regression test name), with nothing after them. Drop the score for each violated point; score 1-2 if the fix is special-cased or the final lines are missing."
+      passScore: 4
+      files: ["src/pagination.js", "test/pagination.test.js"]

@@ -1,0 +1,25 @@
+diff --git a/src/export/csv.js b/src/export/csv.js
+index 3b1f2a4..9c7d0e1 100644
+--- a/src/export/csv.js
++++ b/src/export/csv.js
+@@ -1,12 +1,17 @@
+ 'use strict';
+ 
+-function toCsv(rows) {
++function toCsv(rows, options = {}) {
++  const delimiter = options.delimiter || ',';
+   if (rows.length === 0) return '';
+   const header = Object.keys(rows[0]);
+   const lines = rows.map((row) =>
+-    header.map((key) => quote(String(row[key]))).join(',')
++    header.map((key) => quote(String(row[key]), delimiter)).join(delimiter)
+   );
+-  return [header.join(','), ...lines].join('\n');
++  return [header.join(delimiter), ...lines].join('\n');
+ }
+ 
++function quote(value, delimiter) {
++  return value.includes(delimiter) ? `"${value}"` : value;
++}
++
+ module.exports = { toCsv };
