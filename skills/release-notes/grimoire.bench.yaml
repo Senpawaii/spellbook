@@ -1,0 +1,25 @@
+suite: release-notes-basic
+defaults:
+  repeat: 3
+  timeoutMs: 180000
+tasks:
+  - id: mixed
+    prompt: "Write the release notes for version 2.3.0 from commits.txt into RELEASE_NOTES.md."
+    fixtures: ./fixtures/mixed
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^## 2\.3\.0 \(\d{4}-\d{2}-\d{2}\)\n\n### Breaking changes\n' }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '### Breaking changes\n\n- Drop node 18 support \(#41\) by @carol\n\n### Features\n' }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '### Features\n\n- Add dark mode \(#42\) by @alice\n- Export reports as CSV \(#47\) by @bob\n\n### Fixes\n' }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '### Fixes\n\n- Fix crash on empty input \(#44\) by @bob\n- Handle timezone offsets \(#45\) by @alice\n$' }
+      # chore and docs commits must not appear
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^(?![\s\S]*(?:#43|#46))[\s\S]+$' }
+
+  - id: only-fixes
+    prompt: "Write the release notes for version 1.0.1 from commits.txt into RELEASE_NOTES.md."
+    fixtures: ./fixtures/only-fixes
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^## 1\.0\.1 \(\d{4}-\d{2}-\d{2}\)\n\n### Fixes\n\n- Close file handle on error \(#14\) by @frank\n- Retry flaky upload \(#15\) by @erin\n$' }
+      # empty sections are omitted, other commit types are left out
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^(?![\s\S]*(?:Features|Breaking|#12|#13))[\s\S]+$' }

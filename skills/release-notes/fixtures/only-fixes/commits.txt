@@ -1,0 +1,4 @@
+ci: pin action versions (#12) by dana
+fix: retry flaky upload. (#15) by erin
+chore: bump lockfile (#13) by dana
+fix: close file handle on error (#14) by frank

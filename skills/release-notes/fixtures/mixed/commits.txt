@@ -1,0 +1,7 @@
+feat: add dark mode (#42) by alice
+fix: fix crash on empty input (#44) by bob
+chore: update deps (#43) by alice
+feat!: drop node 18 support (#41) by carol
+fix: handle timezone offsets (#45) by alice
+docs: tweak readme (#46) by bob
+feat: export reports as CSV (#47) by bob
