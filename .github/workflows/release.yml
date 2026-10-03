@@ -1,0 +1,85 @@
+name: Release
+
+# Releases are tags named <skill>@<semver>, e.g. release-notes@1.1.0.
+on:
+  push:
+    tags: ["*@*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Validate tag against the skill
+        id: skill
+        run: |
+          set -euo pipefail
+          name="${GITHUB_REF_NAME%@*}"
+          version="${GITHUB_REF_NAME##*@}"
+          file="skills/${name}/SKILL.md"
+
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "::error::Tag version '$version' is not semver"; exit 1
+          fi
+          if [ ! -f "$file" ]; then
+            echo "::error::$file does not exist for tag $GITHUB_REF_NAME"; exit 1
+          fi
+
+          # Read name and version from the frontmatter block only.
+          front="$(sed -n '1,/^---[[:space:]]*$/{/^---/!p}' <(tail -n +2 "$file"))"
+          declared_name="$(printf '%s\n' "$front" | sed -n 's/^name:[[:space:]]*//p' | tr -d '\r"')"
+          declared_version="$(printf '%s\n' "$front" | sed -n 's/^version:[[:space:]]*//p' | tr -d '\r"')"
+          if [ "$declared_name" != "$name" ]; then
+            echo "::error::SKILL.md name '$declared_name' does not match directory/tag '$name'"; exit 1
+          fi
+          if [ "$declared_version" != "$version" ]; then
+            echo "::error::SKILL.md version '$declared_version' does not match tag version '$version'"; exit 1
+          fi
+
+          # Only release commits that are on main.
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::Tagged commit is not on main"; exit 1
+          fi
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Package the skill
+        run: |
+          set -euo pipefail
+          name='${{ steps.skill.outputs.name }}'
+          version='${{ steps.skill.outputs.version }}'
+          mkdir dist
+          # The installable bundle excludes benchmark inputs (suite and fixtures).
+          (cd skills && zip -qr "../dist/${name}-${version}.zip" "$name" \
+            -x "${name}/fixtures/*" "${name}/grimoire.bench.yaml")
+          (cd dist && sha256sum "${name}-${version}.zip" > "${name}-${version}.zip.sha256")
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          name='${{ steps.skill.outputs.name }}'
+          version='${{ steps.skill.outputs.version }}'
+
+          # Notes: commits that touched this skill since its previous release.
+          prev="$(git describe --tags --abbrev=0 --match "${name}@*" "${GITHUB_SHA}^" 2>/dev/null || true)"
+          range="${prev:+${prev}..}${GITHUB_SHA}"
+          git log --no-merges --format='- %s (%h)' "$range" -- "skills/${name}" > notes.md
+          [ -s notes.md ] || echo "No changes recorded." > notes.md
+
+          flags=()
+          if [[ "$version" == *-* ]]; then flags+=(--prerelease); fi
+
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "${name} ${version}" \
+            --notes-file notes.md \
+            --verify-tag \
+            "${flags[@]}"

@@ -23,3 +23,12 @@ tasks:
       - { type: file_contains, path: RELEASE_NOTES.md, regex: '^## 1\.0\.1 \(\d{4}-\d{2}-\d{2}\)\n\n### Fixes\n\n- Close file handle on error \(#14\) by @frank\n- Retry flaky upload \(#15\) by @erin\n$' }
       # empty sections are omitted, other commit types are left out
       - { type: file_contains, path: RELEASE_NOTES.md, regex: '^(?![\s\S]*(?:Features|Breaking|#12|#13))[\s\S]+$' }
+
+  # Added in 1.1.0: `perf` commits get their own section between Features and Fixes.
+  - id: perf
+    prompt: "Write the release notes for version 2.4.0 from commits.txt into RELEASE_NOTES.md."
+    fixtures: ./fixtures/perf
+    assertions:
+      - { type: skill_loaded }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^## 2\.4\.0 \(\d{4}-\d{2}-\d{2}\)\n\n### Features\n\n- Add export command \(#50\) by @hank\n\n### Performance\n\n- Speed up startup \(#49\) by @hank\n- Cache parsed config \(#52\) by @gina\n\n### Fixes\n\n- Fix off-by-one in pager \(#51\) by @gina\n$' }
+      - { type: file_contains, path: RELEASE_NOTES.md, regex: '^(?![\s\S]*#53)[\s\S]+$' }

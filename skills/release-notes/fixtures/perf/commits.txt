@@ -1,0 +1,5 @@
+perf: cache parsed config (#52) by gina
+feat: add export command (#50) by hank
+fix: fix off-by-one in pager (#51) by gina
+perf: speed up startup. (#49) by hank
+chore: bump deps (#53) by hank
